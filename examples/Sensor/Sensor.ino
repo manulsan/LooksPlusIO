@@ -1,17 +1,11 @@
 /*
  LooksPlusIO Example for sensors
-    This example is for ESP8266, ESP32, etc.
-        tested with ESP32 only
-
+    Tested with ESP32( Olimax ESP32-GATEWAY B/D)
+    No copyrights
 */
 #include <LooksPlusIO.h>
-#define WIFI_SSID "DAMOSYS"  // "YOUR_WIFI_SSID"
-#define WIFI_PASS "damo8864" // "YOUR_WIFI_PASSWORD"
-
-#define DEVICE_SN "000303FF0024110000001" // replace with your device serial number
-#define UPLOAD_INTERVAL 5000
-
-#define _NTP_USED_
+#include "def.h"
+#include <esp_random.h>
 
 #ifdef _NTP_USED_
 // if NTP used, "data created time" is used, if not server side time is used
@@ -20,23 +14,17 @@ WiFiUDP ntpUDP;
 NTPClient ntpClient(ntpUDP, "pool.ntp.org", 0, 60000); // 0 for UTC offset, 60000 for update interval
 #endif
 
-#define NUM_OF_DATA_FIELDS 2 // number of sensors : MAX 10, default 2
-
-loat g_fValues[NUM_OF_DATA_FIELDS] = {0, 0}; // sensor values array
-unsigned long prevMillis = 0;
 bool g_emitRequired = false;
+unsigned long prevMillis = 0;
+float g_fValues[NUM_OF_DATA_FIELDS] = {0, 0}; // data store buf
+LooksPlusIO looksplusIO(DEVICE_SN, NUM_OF_DATA_FIELDS);
 
-LooksPlusIO looksplusIO(DEVICE_SN);
-void commandCB(const char *payload, size_t length); // callback func that is received from apps command
-void initWIFI();
-void initSensor();
-
-//------------------------------------------------------------------------------
+//--------------------------------------------------------------------
 // name :setup
+//--------------------------------------------------------------------
 void setup()
 {
     Serial.begin(115200);
-
     initWIFI();
     initSensor();
 #ifdef _NTP_USED_
@@ -46,81 +34,106 @@ void setup()
     looksplusIO.init(commandCB);
 }
 
-//------------------------------------------------------------------------------
+//--------------------------------------------------------------------
 // name : loop
+//--------------------------------------------------------------------
 void loop()
 {
+    float fValue;
 #ifdef _NTP_USED_
     ntpClient.update();
 #endif
     unsigned long curMillis = millis();
     if (curMillis - prevMillis >= UPLOAD_INTERVAL || g_emitRequired)
     {
-        g_fValues[0] = getTemperature();
-        g_fValues[1] = getHumidity();
+        fValue = getTemperature();
+        if (fValue != g_fValues[0])
+        {
+            g_fValues[0] = fValue;
+            g_emitRequired = true;
+        }
+
+        fValue = getHumidity();
+        if (fValue != g_fValues[1])
+        {
+            g_fValues[1] = fValue;
+            g_emitRequired = true;
+        }
 #ifdef _NTP_USED_
         looksplusIO.send(g_fValues, NUM_OF_DATA_FIELDS, ntpClient.getEpochTime());
 #else
         looksplusIO.send(g_fValues, NUM_OF_DATA_FIELDS);
 #endif
         prevMillis = curMillis;
+        g_emitRequired = false;
     }
     looksplusIO.loop();
 }
 
-//------------------------------------------------------------------------------
+//--------------------------------------------------------------------
 // name : commandCB
+//--------------------------------------------------------------------
 void commandCB(const char *payload, size_t length)
 {
-    // Serial.printf("commandCB, payload=%s\n\r", payload);
-    const int capacity = JSON_ARRAY_SIZE(2) + 2 * JSON_OBJECT_SIZE(3) + 4 * JSON_OBJECT_SIZE(1);
-    StaticJsonDocument<capacity> doc;
+    Serial.printf("commandCB, payload=%s\n\r", payload);
+    DynamicJsonDocument doc(1024);
     DeserializationError err = deserializeJson(doc, String(payload));
-    if (err)
-    {
-        Serial.printf("deserializeJson() returned ", (const char *)err.f_str());
-        return;
-    }
-    auto cmd = doc["cmd"].as<const char *>();
-    if (strcmp(cmd, "sync") == 0)
-        g_emitRequired = true;
-    else if (strcmp(cmd, "reboot") == 0)
-    {
-        //  reboot();
-    }
 
+    if (err)
+        Serial.printf("err: deserializeJson() returned ", (const char *)err.f_str());
     else
-        Serial.printf("cmd %s is not defined\n\r", cmd);
+    {
+        auto cmd = doc["cmd"].as<const char *>();
+        if (strcmp(cmd, "sync") == 0)
+            g_emitRequired = true;
+        else if (strcmp(cmd, "reboot") == 0)
+            ESP.restart();
+        else
+            Serial.printf("cmd %s is not defined\n\r", cmd);
+    }
 }
 
-//------------------------------------------------------------------------------
-// make your own sensor functions
+//--------------------------------------------------------------------
+// name: getTemperature
+//--------------------------------------------------------------------
 float getTemperature()
 {
-    return 25.0;
-}
-float getHumidity()
-{
-    return 50.0;
+    // make your own sensor function here
+    uint32_t data1 = esp_random() % 100;
+    uint32_t data2 = esp_random() % 100;
+    return (float)data1 + (float)(data2 / 100.0);
 }
 
-//------------------------------------------------------------------------------
+//--------------------------------------------------------------------
+// name: getHumidity
+//--------------------------------------------------------------------
+float getHumidity()
+{
+    // make your own sensor function here
+    uint32_t data1 = esp_random() % 100;
+    uint32_t data2 = esp_random() % 100;
+    return (float)data1 + (float)(data2 / 100.0);
+}
+
+//--------------------------------------------------------------------
 // name : initSensor
+//--------------------------------------------------------------------
 void initSensor()
 {
     // init your sensor here
 }
 
-//------------------------------------------------------------------------------
+//--------------------------------------------------------------------
 // name : initWIFI
+//--------------------------------------------------------------------
 void initWIFI()
 {
     WiFi.begin(WIFI_SSID, WIFI_PASS);
     while (WiFi.status() != WL_CONNECTED)
     {
-        delay(500);
-        Serial.print(".");
+        delay(1000);
+        Serial.printf(".");
     }
-    Serial.printf("WiFi connected\n\rIP address: ");
+    Serial.printf("\n\rWiFi connected!!!\tIP address: ");
     Serial.println(WiFi.localIP());
 }

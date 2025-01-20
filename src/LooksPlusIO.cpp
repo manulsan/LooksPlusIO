@@ -3,11 +3,19 @@
 #include "LooksPlusIO.h"
 
 //------------------------------------------------------------------------------
-// name: init
-// desc: connect to cloud
+// name: init,  desc: connect to cloud
 //------------------------------------------------------------------------------
 void LooksPlusIO::init(std::function<void(const char *payload, size_t length)> userCB)
 {
+    //---------------------------------------------
+    // data validation check
+    if (_szUrlPath == NULL && strlen(_szUrlPath) >= 32)
+        goPanic("Invalid device serial number");
+
+    if (_countOfData <= 0 || _countOfData > 10)
+        goPanic("Invalid field count !!!, field count= 1-10");
+
+    //---------------------------------------------
     _bConnected = false;
     using std::placeholders::_1;
     using std::placeholders::_2;
@@ -17,12 +25,12 @@ void LooksPlusIO::init(std::function<void(const char *payload, size_t length)> u
     if (userCB != NULL)
         _socketIO.on("app-cmd", userCB);
 
-    _socketIO.beginSSL(SERVER_URL, SERVER_PORT, _szUrlPath, ""); // => OK
+    // Serial.printf("SERVER_URL=%s  SERVER_PORT=%d _szUrlPath=%s", SERVER_URL, SERVER_PORT, _szUrlPath);
+    _socketIO.beginSSL(SERVER_URL, SERVER_PORT, _szUrlPath);
 }
 
 //------------------------------------------------------------------------------
-// name: onConnected
-// desc: connected callback
+// name: onConnected,   desc: connected callback
 //------------------------------------------------------------------------------
 void LooksPlusIO::onConnected(const char *payload, size_t length)
 {
@@ -31,8 +39,7 @@ void LooksPlusIO::onConnected(const char *payload, size_t length)
 }
 
 //------------------------------------------------------------------------------
-// name: onDisconnected
-// desc: disconnected callback
+// name: onDisconnected,    desc: disconnected callback
 //------------------------------------------------------------------------------
 void LooksPlusIO::onDisconnected(const char *payload, size_t length)
 {
@@ -41,8 +48,7 @@ void LooksPlusIO::onDisconnected(const char *payload, size_t length)
 }
 
 //------------------------------------------------------------------------------
-// name: send
-// desc: send data to cloud
+// name: send,  desc: send data to cloud
 //------------------------------------------------------------------------------
 bool LooksPlusIO::send(float fArr[], uint8_t count, unsigned long ts)
 {
@@ -54,19 +60,17 @@ bool LooksPlusIO::send(float fArr[], uint8_t count, unsigned long ts)
     for (uint8_t i = 0; i < count; i++)
         _fValues[i] = fArr[i];
 
-    _bModified = true;
-    _createdAt = ts; // time stamp
+    _bDataModified = true;
+    _createdAt = ts;
     return true;
 }
 
 //------------------------------------------------------------------------------
-// name: loop
-// desc: send data to cloud
+// name: loop,  desc: send data to cloud
 //------------------------------------------------------------------------------
 void LooksPlusIO::loop()
 {
-    // g_ntpClient.update();
-    if (_bConnected && _bModified)
+    if (_bConnected && _bDataModified)
     {
         DynamicJsonDocument doc(1024);
         JsonObject root = doc.to<JsonObject>();
@@ -80,10 +84,11 @@ void LooksPlusIO::loop()
 
         String output;
         serializeJson(doc, output);
+
+        Serial.printf("topic=dev-data, payload=%s\n\r", output.c_str());
         _socketIO.emit("dev-data", output.c_str());
 
-        Serial.println(output);
-        _bModified = false;
+        _bDataModified = false;
     }
     else
         _socketIO.loop();

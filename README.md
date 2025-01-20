@@ -1,10 +1,26 @@
 # LooksPlusIO
 
-Device SDK for atCloud365.com
+IoT Device Development SDK for atCloud365.com
 
 ## Concept
 
-By generalizing IoT devices, all devices are managed as a single unit object. Devices are managed with the same method, and the view widget is different according to the user's viewing method.
+By generalizing IoT devices, all devices are managed as a single object.<br>
+The Object internal methods(funections) are all same but data is different.
+
+## Tested B/D (Modules)
+
+### ESP32
+
+- OLIMAX-ESP32-GATEWAY B/D
+
+### ESP8266
+
+- ESP8266 ( not yet verified)
+
+```text
+https://arduino.esp8266.com/stable/package_esp8266com_index.json
+https://arduino.esp8266.com/stable/package_esp8266com_index.json,https://espressif.github.io/arduino-esp32/package_esp32_index.json
+```
 
 ## Basic Steps
 
@@ -21,5 +37,6 @@ By generalizing IoT devices, all devices are managed as a single unit object. De
   WebSockets_Generic
   ```
 
-## Live Demo 
+## Live Demo
+
 https://atcloud365.com
