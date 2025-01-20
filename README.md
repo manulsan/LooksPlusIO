@@ -59,6 +59,6 @@ Using SDKs require "Device SN", Please follow-up below process
 ![image](./images/mfg_list_of_equipments_table.png)
 ![image](./images/mfg_equipments_gen_sn.png)
 ![image](./images/mfg_equipments_gen_sn_confirm.png)
-![image](./images/mfg_equipments_gen_sn_done.png)
+
 ![image](./images/mfg_sn_export.png)
 ![image](./images/mfg_sn_in_sketch.png)
