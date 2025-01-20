@@ -21,13 +21,9 @@ Updats:
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include <SocketIoClient.h>
-
 #define _WEBSOCKETS_LOGLEVEL_ 0 // 0-4
 
-// #define SERVER_URL "atcloud365.com" // #define SERVER_URL "1.218.138.131"
-// #define SERVER_PORT 443
-
-#define SERVER_URL "damosys.com" // #define SERVER_URL "1.218.138.131"
+#define SERVER_URL "damosys.com"
 #define SERVER_PORT 9000
 
 #define SOCKETIO_PATH "/api/dev/io/?transport=websocket&sn=%s"
