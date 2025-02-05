@@ -5,7 +5,10 @@
 //------------------------------------------------------------------------------
 // name: init,  desc: connect to cloud
 //------------------------------------------------------------------------------
-void LooksPlusIO::init(std::function<void(const char *payload, size_t length)> userCB)
+// void LooksPlusIO::init(std::function<void(const char *payload, size_t length)> commandCB)
+void LooksPlusIO::init(std::function<void(const char *payload, size_t length)> commandCB,
+                       std::function<void(const bool status)> connectCB)
+
 {
     //---------------------------------------------
     // data validation check
@@ -22,8 +25,11 @@ void LooksPlusIO::init(std::function<void(const char *payload, size_t length)> u
     _socketIO.on("connect", std::bind(&LooksPlusIO::onConnected, this, std::placeholders::_1, std::placeholders::_2));
     _socketIO.on("disconnect", std::bind(&LooksPlusIO::onDisconnected, this, std::placeholders::_1, std::placeholders::_2));
 
-    if (userCB != NULL)
-        _socketIO.on("app-cmd", userCB);
+    if (commandCB != NULL)
+        _socketIO.on("app-cmd", commandCB);
+
+    if (connectCB != NULL)
+        connectCallback = connectCB;
 
     // Serial.printf("SERVER_URL=%s  SERVER_PORT=%d _szUrlPath=%s", SERVER_URL, SERVER_PORT, _szUrlPath);
     _socketIO.beginSSL(SERVER_URL, SERVER_PORT, _szUrlPath);
@@ -35,7 +41,8 @@ void LooksPlusIO::init(std::function<void(const char *payload, size_t length)> u
 void LooksPlusIO::onConnected(const char *payload, size_t length)
 {
     _bConnected = true;
-    Serial.println("onConnected, message: ");
+    if (connectCallback != NULL)
+        connectCallback(_bConnected);
 }
 
 //------------------------------------------------------------------------------
@@ -44,7 +51,8 @@ void LooksPlusIO::onConnected(const char *payload, size_t length)
 void LooksPlusIO::onDisconnected(const char *payload, size_t length)
 {
     _bConnected = false;
-    Serial.println("onDisconnected, message: ");
+    if (connectCallback != NULL)
+        connectCallback(_bConnected);
 }
 
 //------------------------------------------------------------------------------

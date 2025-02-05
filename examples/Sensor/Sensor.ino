@@ -15,7 +15,7 @@ NTPClient ntpClient(ntpUDP, "pool.ntp.org", 0, 60000); // 0 for UTC offset, 6000
 #endif
 
 bool g_emitRequired = false;
-unsigned long prevMillis = 0;
+unsigned long g_prevMillis = 0;
 float g_fValues[NUM_OF_DATA_FIELDS] = {0, 0}; // data store buf
 LooksPlusIO looksplusIO(DEVICE_SN, NUM_OF_DATA_FIELDS);
 
@@ -25,13 +25,17 @@ LooksPlusIO looksplusIO(DEVICE_SN, NUM_OF_DATA_FIELDS);
 void setup()
 {
     Serial.begin(115200);
+
     initWIFI();
     initSensor();
+
 #ifdef _NTP_USED_
     ntpClient.begin();
     ntpClient.update();
 #endif
-    looksplusIO.init(commandCB);
+
+    looksplusIO.init(onCommandCallback, onConnectCallback);
+    Serial.printf("----- ARDUINO SKETCH FOR SENSORS -----\n\r");
 }
 
 //--------------------------------------------------------------------
@@ -44,7 +48,7 @@ void loop()
     ntpClient.update();
 #endif
     unsigned long curMillis = millis();
-    if (curMillis - prevMillis >= UPLOAD_INTERVAL || g_emitRequired)
+    if (looksplusIO.isConnected() && (curMillis - g_prevMillis) >= UPLOAD_INTERVAL || g_emitRequired)
     {
         fValue = getTemperature();
         if (fValue != g_fValues[0])
@@ -64,18 +68,30 @@ void loop()
 #else
         looksplusIO.send(g_fValues, NUM_OF_DATA_FIELDS);
 #endif
-        prevMillis = curMillis;
+        g_prevMillis = curMillis;
         g_emitRequired = false;
     }
     looksplusIO.loop();
 }
 
 //--------------------------------------------------------------------
-// name : commandCB
+// name : onCommandCallback
 //--------------------------------------------------------------------
-void commandCB(const char *payload, size_t length)
+void onConnectCallback(bool status)
 {
-    Serial.printf("commandCB, payload=%s\n\r", payload);
+    g_prevMillis = millis();
+    Serial.printf("onConnectCallback, status=%s\n\r", status ? "Connected" : "Disconnected");
+    if (!status)
+        Serial.printf("\tCheck if SN is registered on Server.  URL: %s\n\r",
+                      looksplusIO.getUrlPath());
+}
+
+//--------------------------------------------------------------------
+// name : onCommandCallback
+//--------------------------------------------------------------------
+void onCommandCallback(const char *payload, size_t length)
+{
+    Serial.printf("onCommandCallback, payload=%s\n\r", payload);
     DynamicJsonDocument doc(1024);
     DeserializationError err = deserializeJson(doc, String(payload));
 

@@ -12,5 +12,5 @@
 #define NUM_OF_DATA_FIELDS 2 // number of sensors : MAX 10
 void initWifi();
 void initSensor();
-void commandCB(const char *payload, size_t length); // callback func that is received from apps command
+void onCommandCallback(const char *payload, size_t length); // callback func that is received from apps command
 #endif

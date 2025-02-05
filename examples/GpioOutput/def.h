@@ -27,5 +27,5 @@ void initGPIO();
 void setOutput(int f, float v);
 void setOutputAll(float v);
 
-void commandCB(const char *payload, size_t length); // callback func that is received from apps command
+void onCommandCallback(const char *payload, size_t length); // callback func that is received from apps command
 #endif
