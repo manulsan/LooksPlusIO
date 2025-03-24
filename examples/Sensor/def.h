@@ -1,16 +1,22 @@
 #ifndef _DEF_H_
 #define _DEF_H_
 
+#if defined(ESP32)
+#include <esp_random.h>
+#endif
+
 #define WIFI_SSID "DAMOSYS"  // replace with "YOUR_WIFI_SSID"
 #define WIFI_PASS "damo8864" // replace with "YOUR_WIFI_PASSWORD"
 
 // #define _NTP_USED_
+#define UPLOAD_INTERVAL 20000             // 20 seconds
+#define DEVICE_SN "0001043C0024120000001" // replace with your device serial number
 
-#define UPLOAD_INTERVAL 5000
-#define DEVICE_SN "0001040C002406000000A" // replace with your device serial number
-
-#define NUM_OF_DATA_FIELDS 2 // number of sensors : MAX 10
+// you can define the number of sensors here
+#define NUM_OF_DATA_FIELDS 3 // number of sensors : min=1 , max=10
 void initWifi();
 void initSensor();
-void onCommandCallback(const char *payload, size_t length); // callback func that is received from apps command
+
+void onDataCallback(const char *payload, size_t length);
+void onConnectCallback(bool status);
 #endif

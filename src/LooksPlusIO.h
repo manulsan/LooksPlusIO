@@ -6,12 +6,11 @@ Updats:
 *********************************************************************************/
 
 #if defined(ESP32)
-#pragma message "ESP32 B/D is working!"
+#pragma message "You are working with ESP32 module!"
 #elif defined(ESP8266)
-#pragma message "ESP8266 is not working well, has bus!"
-#error ESP8266 has ssl problem, stop compiling
+#pragma message "You are working with ESP8266 module!"
 #else
-#error This code is intended to run only on the ESP8266/ESP32 boards ! Please check your Tools->Board setting.
+#pragma message "You are working with un-known  module!"
 #endif
 #pragma once
 
@@ -20,14 +19,19 @@ Updats:
 
 #include <Arduino.h>
 #include <ArduinoJson.h>
-#include <SocketIoClient.h>
-#define _WEBSOCKETS_LOGLEVEL_ 0 // 0-4
 
-#define SERVER_URL "damosys.com"
-// #define SERVER_PORT 9000
-#define SERVER_PORT 44300 // for test only -> tobe removed
+#ifdef _socket_io_old_
+#include <SocketIoClient.h> // prev version, Ok in ESP32
+#else
+#include <SocketIOclient.h> // testing in esp8266
+#endif
+#define _WEBSOCKETS_LOGLEVEL_ 4 // 0-4
 
-#define SOCKETIO_PATH "/api/dev/io/?transport=websocket&sn=%s"
+#define SERVER_URL "atcloud365.com"
+#define SERVER_PORT 443
+// #define SOCKETIO_PATH "/api/dev/io/?transport=websocket&sn=%s"
+#define SOCKETIO_PATH "/api/dev/io/?sn=%s"
+
 class LooksPlusIO
 {
 public:
@@ -41,32 +45,38 @@ public:
 
   void goPanic(char *msg)
   {
-    Serial.println("msg");
+    Serial.printf("Panic: %s\n\r", msg);
     while (1)
       delay(1000);
   }
-  void init(std::function<void(const char *payload, size_t length)> commandCB,
-            std::function<void(const bool status)> connectCB);
-  std::function<void(const bool status)> connectCallback;
+  void init(std::function<void(const char *payload, size_t length)> commandCB = nullptr,
+            std::function<void(const bool status)> connectCB = nullptr,
+            bool debug = false);
 
   void loop();
   char *getUrlPath() { return _szUrlPath; };
   bool isConnected() { return _bConnected; };
   bool send(float arr[], uint8_t count, unsigned long ts = 0);
-  // void setConnectionStatus(bool status) { _bConnected = status; };  //-- deprecated
+  void socketIOEventCallback(socketIOmessageType_t type, uint8_t *payload, size_t length);
 
 private:
-  char _szUrlPath[128] = {0};
+  char _szUrlPath[64] = {0};
   bool _bConnected = false;
-  bool _bDataModified = false;
+  bool _bHasUpdatedData = false;
+  bool _bDebug = false;
+  uint8_t _countOfData = 2;
   unsigned long _createdAt = 0; // epoch time
 
-  uint8_t _countOfData = 2;
   float _fValues[10] = {0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0}; // max 10 ea field
 
-  void onConnected(const char *payload, size_t length);
-  void onDisconnected(const char *payload, size_t length);
+  std::function<void(const bool status)> connectCallback = nullptr;
+  std::function<void(const char *payload, size_t length)> dataCallback = nullptr;
+  bool checkRange(int value, int min, int max) { return (value >= min && value <= max); };
 
+#ifdef _socket_io_old_
   SocketIoClient _socketIO;
+#else
+  SocketIOclient _socketIO;
+#endif
 };
 #endif
