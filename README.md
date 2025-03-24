@@ -12,10 +12,7 @@ The Object internal methods(funections) are all same but data is different.
 ### OLIMAX-ESP32-GATEWAY B/D
 ### ESP8266( NodeMCU 1.0 (ESP-12E Module)
 
-- 
-
-### ESP8266
-
+## For ESP8266
 
 ```text
 https://arduino.esp8266.com/stable/package_esp8266com_index.json
