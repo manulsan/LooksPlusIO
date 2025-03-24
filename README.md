@@ -9,13 +9,13 @@ The Object internal methods(funections) are all same but data is different.
 
 ## Tested B/D (Modules)
 
-### ESP32
+### OLIMAX-ESP32-GATEWAY B/D
+### ESP8266( NodeMCU 1.0 (ESP-12E Module)
 
-- OLIMAX-ESP32-GATEWAY B/D
+- 
 
 ### ESP8266
 
-- ESP8266 ( not yet verified)
 
 ```text
 https://arduino.esp8266.com/stable/package_esp8266com_index.json
@@ -33,20 +33,11 @@ https://arduino.esp8266.com/stable/package_esp8266com_index.json,https://espress
   WebSockets_Generic
   ```
 
-## Live Demo
-
-https://atcloud365.com
+## Live Demo : https://atcloud365.com
 
 ## Steps for Using SDKs
 
-- This is for developer testing and developing IoT device
-- For the M/P, contact alex@happyelec.com
-
-### Device SN(Serial Number)
-
-Using SDKs require "Device SN", Please follow-up below process
-
-- Access https://damosys.com:9000/mfg
+- Access https://atcloud365.com/mfg
 - Signup and Login
 - Define Your Equipment
 - Generate SN for your Device
